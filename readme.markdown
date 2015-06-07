@@ -62,8 +62,8 @@ without parsing. This is handy because parsing the scope can take a long time,
 so you can prioritize fast builds over saving bytes in the final output.
 
 Use `opts.vars` to override the default inserted variables, or set
-`opts.vars[name]` to `undefined` to override an undefined variable that has
-already been set by default.
+`opts.vars[name]` to `undefined` to not insert a variable which would otherwise
+be inserted.
 
 If `opts.debug` is true, an inline source map will be generated to compensate
 for the extra lines.
@@ -101,13 +101,13 @@ Pass in an object of functions as the `vars` option.
 
 ``` js
 var vars = {
-    process: function (row, basedir) {
+    process: function (file, basedir) {
         return {
             id: "path/to/custom_process.js",
             source: customProcessContent
         }
     },
-    Buffer: function (row, basedir) {
+    Buffer: function (file, basedir) {
         return {
             id: 'path/to/custom_buffer.js',
             source: customProcessContent,

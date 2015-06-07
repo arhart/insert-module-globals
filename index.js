@@ -82,7 +82,7 @@ module.exports = function (file, opts) {
         
         varNames.forEach(function (name) {
             if (scope.globals.implicit.indexOf(name) >= 0) {
-                var value = vars[name](file, basedir);
+                var value = vars[name] && vars[name](file, basedir);
                 if (value) {
                     globals[name] = value;
                     self.emit('global', name);
