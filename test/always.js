@@ -5,10 +5,10 @@ var insert = require('../');
 var concat = require('concat-stream');
 var vm = require('vm');
 
-test('always insert', function (t) {
+test('always true insert', function (t) {
     t.plan(10);
     var s = mdeps({
-        transform: inserter,
+        transform: inserter({ always: true }),
         modules: {
             buffer: require.resolve('buffer/')
         }
@@ -28,14 +28,17 @@ test('always insert', function (t) {
     s.end(__dirname + '/always/main.js');
 });
 
-function inserter (file) {
-    return insert(file, { always: true });
-}
-
-test('always insert custom globals without defaults', function (t) {
+test('always true insert custom globals without defaults', function (t) {
     t.plan(7);
     var s = mdeps({
-        transform: inserter_custom,
+        transform: inserter({ always: true, vars: {
+            global: undefined,
+            process: undefined,
+            Buffer: undefined,
+            __filename: undefined,
+            __dirname: undefined,
+            custom: function() { return '"inserted custom"' }
+        }}),
         modules: {
             buffer: require.resolve('buffer/')
         }
@@ -55,13 +58,42 @@ test('always insert custom globals without defaults', function (t) {
     s.end(__dirname + '/always/custom_globals_without_defaults.js');
 });
 
-function inserter_custom (file) {
-    return insert(file, { always: true, vars: {
-        global: undefined,
-        process: undefined,
-        Buffer: undefined,
-        __filename: undefined,
-        __dirname: undefined,
-        custom: function() { return '"inserted custom"' }
-    }});
+test('always truthy-but-not-true insert hidden from quick test is not really inserted; true is', function (t) {
+    t.plan(2);
+    var testit = function(always, expected) {
+        var s = mdeps({
+            transform: inserter({ always: always, vars: {
+                custom: function() { return '"inserted custom"' }
+            }}),
+            modules: {
+                buffer: require.resolve('buffer/')
+            }
+        });
+        s.pipe(bpack({ raw: true })).pipe(concat(function (src) {
+            var c = {
+                t: t,
+                process: 'sandbox process',
+                Buffer: 'sandbox Buffer',
+                __filename: 'sandbox __filename',
+                __dirname: 'sandbox __dirname',
+                custom: 'sandbox custom',
+                expected: expected,
+                self: { xyz: 555 }
+            };
+            vm.runInNewContext(src, c);
+        }));
+        s.end(__dirname + '/always/hidden_from_quick_test.js');
+    };
+
+    var always = 'truthy', expected = 'sandbox custom';
+    testit(always, expected);
+
+    always = true; expected = 'inserted custom';
+    testit(always, expected);
+});
+
+function inserter (opts) {
+    return function (file) {
+        return insert(file, opts);
+    };
 }

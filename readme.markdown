@@ -57,9 +57,11 @@ Return a transform stream `inserter` for the filename `file` that will accept a
 javascript file as input and will output the file with a closure around the
 contents as necessary to define extra builtins.
 
-When `opts.always` is truthy, wrap every file with all the global variables
+When `opts.always` is true, wrap every file with all the global variables
 without parsing. This is handy because parsing the scope can take a long time,
-so you can prioritize fast builds over saving bytes in the final output.
+so you can prioritize fast builds over saving bytes in the final output. When
+`opts.always` is truthy but not true, avoid parsing but perform a quick test to
+determine if wrapping should be skipped.
 
 Use `opts.vars` to override the default inserted variables, or set
 `opts.vars[name]` to `undefined` to not insert a variable which would otherwise
